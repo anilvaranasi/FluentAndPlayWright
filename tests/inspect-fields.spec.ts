@@ -48,10 +48,10 @@ test('Inspect Incident Mandatory and Resolution Fields', async ({ page }) => {
   // 6. Inspect Resolution Information inputs
   const allInputs = await (await getScopeLocator('input, select, textarea')).evaluateAll(elements => {
     return elements
-      .filter(el => el.id.includes('close') || el.name?.includes('close') || el.id.includes('resolution'))
+      .filter(el => el.id.includes('close') || (el as HTMLInputElement).name?.includes('close') || el.id.includes('resolution'))
       .map(el => ({
         id: el.id,
-        name: el.name,
+        name: (el as HTMLInputElement).name,
         tagName: el.tagName,
         options: el.tagName === 'SELECT' ? Array.from(el.querySelectorAll('option')).map(o => ({ value: o.value, text: o.textContent?.trim() })) : undefined
       }));

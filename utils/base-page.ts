@@ -8,6 +8,15 @@ export class ServiceNowPage {
   protected readonly page: Page;
   private _classicFrame: FrameLocator | null = null;
 
+  /**
+   * Returns a Locator scoped to the ServiceNow classic iframe (#gsft_main) if present,
+   * otherwise falls back to the top-level page. Used for classic UI form fields.
+   */
+  inClassicFrame(selector: string): Locator {
+    return this.page.frameLocator('#gsft_main').locator(selector)
+      .or(this.page.locator(selector));
+  }
+
   constructor(page: Page) {
     this.page = page;
   }
