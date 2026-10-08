@@ -1,7 +1,7 @@
-name: 🔄 Pull from ServiceNow → sn-sync branch
+name: 🔄 Pull from ServiceNow → mydev branch
 
 # Run manually whenever you want to pull the latest app state from ServiceNow
-# into the sn-sync branch so you can fetch it locally with: git pull origin sn-sync
+# into the mydev branch so you can fetch it locally with: git pull origin mydev
 on:
   workflow_dispatch:
     inputs:
@@ -16,11 +16,11 @@ on:
 
 env:
   NODE_VERSION: '20'
-  SYNC_BRANCH: 'sn-sync'
+  SYNC_BRANCH: 'mydev'
 
 jobs:
   pull-from-servicenow:
-    name: 📥 Export app from ServiceNow → sn-sync
+    name: 📥 Export app from ServiceNow → mydev
     runs-on: ubuntu-latest
 
     steps:
@@ -73,5 +73,5 @@ jobs:
           else
             git commit -m "sync: pull from ServiceNow ${{ inputs.instance }} on $(date -u +'%Y-%m-%d %H:%M UTC')"
             git push origin ${{ env.SYNC_BRANCH }}
-            echo "✅ sn-sync branch updated. Run: git pull origin sn-sync"
+            echo "✅ mydev branch updated. Run: git pull origin mydev"
           fi
