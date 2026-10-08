@@ -11,8 +11,8 @@ test.describe('Fluent SDK ServiceNow End-to-End Application Suite', () => {
   test('TC-01: Fluent SDK Custom Table and Form Rendering @smoke', async ({ page }) => {
     await taskPage.navigateToNewTask();
     // Validate that custom fields defined in app.now.ts exist on the form
-    const shortDesc = taskPage.inClassicFrame('#x_ibm_fluentplay_task\\.short_description');
-    const priorityOverride = taskPage.inClassicFrame('#x_ibm_fluentplay_task\\.u_priority_override');
+    const shortDesc = taskPage.inClassicFrame('#x_146833_fluentp_0_task\\.short_description');
+    const priorityOverride = taskPage.inClassicFrame('#x_146833_fluentp_0_task\\.u_priority_override');
     
     await expect(shortDesc).toBeVisible({ timeout: 20_000 });
     await expect(priorityOverride).toBeVisible({ timeout: 20_000 });
@@ -32,7 +32,7 @@ test.describe('Fluent SDK ServiceNow End-to-End Application Suite', () => {
     });
 
     // Check Priority value is updated to 1
-    const prioritySelect = taskPage.inClassicFrame('#x_ibm_fluentplay_task\\.priority');
+    const prioritySelect = taskPage.inClassicFrame('#x_146833_fluentp_0_task\\.priority');
     if (await prioritySelect.count() > 0) {
       const selectedValue = await prioritySelect.inputValue();
       expect(selectedValue).toBe('1');

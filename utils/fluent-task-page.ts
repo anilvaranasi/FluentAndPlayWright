@@ -2,7 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { ServiceNowPage } from './base-page';
 
 export class FluentTaskPage extends ServiceNowPage {
-  readonly tableName = 'x_ibm_fluentplay_task';
+  readonly tableName = 'x_146833_fluentp_0_task';
 
   constructor(page: Page) {
     super(page);

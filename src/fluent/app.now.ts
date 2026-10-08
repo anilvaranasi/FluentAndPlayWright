@@ -14,8 +14,8 @@ import { setPriorityOnInsert, stampReviewedOnClose } from '../server/businessRul
 
 // ─── 1. CUSTOM TABLE DEFINITION ──────────────────────────────────────────────
 // Table variable name matches the table name property
-export const x_ibm_fluentplay_task = Table({
-    name: 'x_ibm_fluentplay_task',
+export const x_146833_fluentp_0_task = Table({
+    name: 'x_146833_fluentp_0_task',
     label: 'Fluent Playwright Task',
     extends: 'task',
     autoNumber: {
@@ -59,8 +59,8 @@ export const x_ibm_fluentplay_task = Table({
 // Copies u_priority_override into priority when populated on insert
 BusinessRule({
     $id: Now.ID['br_set_priority_on_insert'],
-    name: 'x_ibm_fluentplay - Set Priority on Insert',
-    table: 'x_ibm_fluentplay_task',
+    name: 'x_146833_fluentp_0 - Set Priority on Insert',
+    table: 'x_146833_fluentp_0_task',
     active: true,
     when: 'before',
     action: ['insert'],
@@ -72,8 +72,8 @@ BusinessRule({
 // Automatically stamps u_reviewed = true when state transitions to Closed (7)
 BusinessRule({
     $id: Now.ID['br_stamp_reviewed_on_close'],
-    name: 'x_ibm_fluentplay - Stamp Reviewed on Close',
-    table: 'x_ibm_fluentplay_task',
+    name: 'x_146833_fluentp_0 - Stamp Reviewed on Close',
+    table: 'x_146833_fluentp_0_task',
     active: true,
     when: 'before',
     action: ['update'],
@@ -85,8 +85,8 @@ BusinessRule({
 // Displays informational message banner when task is loaded
 ClientScript({
     $id: Now.ID['cs_task_onload_helper'],
-    name: 'x_ibm_fluentplay - Task OnLoad Banner',
-    table: 'x_ibm_fluentplay_task',
+    name: 'x_146833_fluentp_0 - Task OnLoad Banner',
+    table: 'x_146833_fluentp_0_task',
     active: true,
     applies_extended: false,
     global: false,
@@ -112,7 +112,7 @@ ClientScript({
 ScriptInclude({
     $id: Now.ID['si_fluentplay_utils'],
     name: 'FluentPlayUtils',
-    apiName: 'x_ibm_fluentplay.FluentPlayUtils',
+    apiName: 'x_146833_fluentp_0.FluentPlayUtils',
     active: true,
     clientCallable: true,
     description: 'Server utility for Fluent Playwright framework operations and validations.',
@@ -123,7 +123,7 @@ ScriptInclude({
 // Requirement: When incident state transitions to Resolved (6), add greeting comment
 BusinessRule({
     $id: Now.ID['br_incident_resolved_comment'],
-    name: 'x_ibm_fluentplay - Incident Resolved Auto Comment',
+    name: 'x_146833_fluentp_0 - Incident Resolved Auto Comment',
     table: 'incident',
     active: true,
     when: 'before',
