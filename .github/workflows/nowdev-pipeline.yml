@@ -58,6 +58,7 @@ jobs:
     name: 🚀 Deploy → ServiceNow DEV
     runs-on: ubuntu-latest
     needs: build
+    environment: development
 
     steps:
       - name: 📥 Checkout
@@ -95,6 +96,7 @@ jobs:
     name: 🎭 Playwright E2E → DEV
     runs-on: ubuntu-latest
     needs: deploy-dev
+    environment: development
 
     steps:
       - name: 📥 Checkout
