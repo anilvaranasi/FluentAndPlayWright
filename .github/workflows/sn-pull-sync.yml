@@ -1,0 +1,77 @@
+name: 🔄 Pull from ServiceNow → sn-sync branch
+
+# Run manually whenever you want to pull the latest app state from ServiceNow
+# into the sn-sync branch so you can fetch it locally with: git pull origin sn-sync
+on:
+  workflow_dispatch:
+    inputs:
+      instance:
+        description: 'Which instance to pull from'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+env:
+  NODE_VERSION: '20'
+  SYNC_BRANCH: 'sn-sync'
+
+jobs:
+  pull-from-servicenow:
+    name: 📥 Export app from ServiceNow → sn-sync
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout sn-sync branch (or create it)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SYNC_BRANCH }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🔑 Authenticate now-sdk to DEV
+        if: ${{ inputs.instance == 'dev' }}
+        run: |
+          echo "${{ secrets.SN_DEV_PASS }}" | npx now-sdk auth \
+            --add "${{ secrets.SN_DEV_INSTANCE }}" \
+            --type basic \
+            --alias dev \
+            --username "${{ secrets.SN_DEV_USER }}" \
+            --password-stdin
+
+      - name: 🔑 Authenticate now-sdk to PROD
+        if: ${{ inputs.instance == 'prod' }}
+        run: |
+          echo "${{ secrets.SN_PROD_PASS }}" | npx now-sdk auth \
+            --add "${{ secrets.SN_PROD_INSTANCE }}" \
+            --type basic \
+            --alias prod \
+            --username "${{ secrets.SN_PROD_USER }}" \
+            --password-stdin
+
+      - name: 📤 Pull (transform) app metadata from ServiceNow
+        run: npx now-sdk transform --auth ${{ inputs.instance }}
+
+      - name: 📝 Commit pulled changes to sn-sync branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "✅ No changes detected from ServiceNow — sn-sync is already up to date."
+          else
+            git commit -m "sync: pull from ServiceNow ${{ inputs.instance }} on $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push origin ${{ env.SYNC_BRANCH }}
+            echo "✅ sn-sync branch updated. Run: git pull origin sn-sync"
+          fi

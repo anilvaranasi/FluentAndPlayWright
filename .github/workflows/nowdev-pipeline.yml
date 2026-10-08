@@ -1,0 +1,131 @@
+name: 🛠️ nowdev — Build → Deploy DEV → Playwright
+
+# Triggered when you push your local mydev branch to origin/nowdev
+# Flow: mydev (local) → git push origin mydev:nowdev → this pipeline
+on:
+  push:
+    branches: [ nowdev ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ─── STAGE 1: Typecheck & Build ──────────────────────────────────────────────
+  build:
+    name: 🔨 Typecheck & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🔍 Validate now.config.json
+        run: |
+          node -e "
+            const cfg = require('./now.config.json');
+            if (!cfg.scope || !cfg.scopeId || !cfg.name) {
+              console.error('❌ Missing required metadata in now.config.json');
+              process.exit(1);
+            }
+            console.log('✅ now.config.json:', cfg.name, '(' + cfg.scope + ')');
+          "
+
+      - name: 🔎 TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: 🏗️ Build Fluent SDK Package
+        run: npm run build
+
+      - name: 💾 Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dist-nowdev
+          path: dist/
+          retention-days: 1
+
+  # ─── STAGE 2: Deploy to ServiceNow DEV instance ──────────────────────────────
+  deploy-dev:
+    name: 🚀 Deploy → ServiceNow DEV
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 📂 Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-dist-nowdev
+          path: dist/
+
+      - name: 🔑 Authenticate now-sdk → DEV
+        run: |
+          echo "${{ secrets.SN_DEV_PASS }}" | npx now-sdk auth \
+            --add "${{ secrets.SN_DEV_INSTANCE }}" \
+            --type basic \
+            --alias dev \
+            --username "${{ secrets.SN_DEV_USER }}" \
+            --password-stdin
+
+      - name: 🚀 Deploy to ServiceNow DEV
+        run: npm run deploy -- --auth dev
+
+  # ─── STAGE 3: Playwright E2E against ServiceNow DEV ──────────────────────────
+  playwright-dev:
+    name: 🎭 Playwright E2E → DEV
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🌐 Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: 🧪 Run Playwright tests against DEV
+        env:
+          SN_DEV_INSTANCE: ${{ secrets.SN_DEV_INSTANCE }}
+          SN_DEV_USER: ${{ secrets.SN_DEV_USER }}
+          SN_DEV_PASS: ${{ secrets.SN_DEV_PASS }}
+          CI: true
+          HEADLESS: true
+          TIMEOUT_SECONDS: 90
+        run: npm run test
+
+      - name: 📊 Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-nowdev-report
+          path: playwright-report/
+          retention-days: 14

@@ -1,8 +1,10 @@
-name: PR Validation & Quality Gate
+# Superseded by fluent-playwright-pipeline.yml which now covers PRs to nowdev/prod/main.
+# Kept for reference only — this file is no longer active.
+name: PR Validation & Quality Gate (legacy — see fluent-playwright-pipeline.yml)
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: []   # disabled — coverage moved to fluent-playwright-pipeline.yml
 
 jobs:
   pr-validation:
