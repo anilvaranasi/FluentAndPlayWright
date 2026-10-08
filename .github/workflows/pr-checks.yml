@@ -1,0 +1,40 @@
+name: PR Validation & Quality Gate
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  pr-validation:
+    name: 🛡️ Code Quality, Types & Build Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🔍 Check now.config.json
+        run: |
+          node -e "
+            const cfg = require('./now.config.json');
+            if (!cfg.scope || !cfg.scopeId || !cfg.name) {
+              console.error('Invalid now.config.json metadata');
+              process.exit(1);
+            }
+            console.log('App scope:', cfg.scope);
+          "
+
+      - name: 🔎 TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: 🏗️ Fluent SDK Build
+        run: npm run build

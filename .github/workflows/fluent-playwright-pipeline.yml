@@ -1,0 +1,182 @@
+name: CI/CD Pipeline - Fluent SDK & Playwright Automation
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**' ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # ─── STAGE 1: Static Validation & Fluent SDK Build ──────────────────────────
+  build:
+    name: 🔨 Build & Validate Fluent App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🔍 Validate now.config.json schema
+        run: |
+          node -e "
+            const cfg = require('./now.config.json');
+            if (!cfg.scope || !cfg.scopeId || !cfg.name) {
+              console.error('❌ Missing required metadata in now.config.json');
+              process.exit(1);
+            }
+            console.log('✅ now.config.json validated:', cfg.name, '(', cfg.scope, ')');
+          "
+
+      - name: 🔎 TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: 🏗️ Build Fluent SDK Package
+        run: npm run build
+
+      - name: 💾 Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dist
+          path: dist/
+          retention-days: 2
+
+  # ─── STAGE 2: Deploy to Development / Test Instance ─────────────────────────
+  deploy-dev:
+    name: 🚀 Deploy to DEV Instance
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 📂 Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-dist
+          path: dist/
+
+      - name: 🔑 Authenticate ServiceNow SDK to DEV
+        run: |
+          echo "${{ secrets.SN_DEV_PASS }}" | npx now-sdk auth \
+            --add "${{ secrets.SN_DEV_INSTANCE }}" \
+            --type basic \
+            --alias dev \
+            --username "${{ secrets.SN_DEV_USER }}" \
+            --password-stdin
+
+      - name: 🚀 Deploy App to DEV Instance
+        run: npm run deploy -- --auth dev
+
+      - name: ✅ Deployment Successful Banner
+        run: echo "ServiceNow Fluent SDK artifacts deployed to DEV."
+
+  # ─── STAGE 3: Automated Playwright E2E Verification ─────────────────────────
+  test-dev:
+    name: 🎭 Playwright E2E Tests (DEV)
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 🌐 Install Playwright Browsers & OS Deps
+        run: npx playwright install --with-deps chromium
+
+      - name: 🧪 Execute Playwright E2E Tests
+        env:
+          SN_INSTANCE_URL: ${{ secrets.SN_DEV_INSTANCE }}
+          SN_USERNAME: ${{ secrets.SN_DEV_USER }}
+          SN_PASSWORD: ${{ secrets.SN_DEV_PASS }}
+          CI: true
+          HEADLESS: true
+          TIMEOUT_SECONDS: 90
+        run: npm run test
+
+      - name: 📊 Upload Playwright HTML Report & Traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-dev-report
+          path: playwright-report/
+          retention-days: 14
+
+  # ─── STAGE 4: Production Deployment (Gatekeeper on Test Success) ───────────
+  deploy-prod:
+    name: 🏆 Deploy to PROD Instance
+    runs-on: ubuntu-latest
+    needs: test-dev
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    environment: production   # Requires manual reviewer approval in GitHub Settings -> Environments
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci || npm install
+
+      - name: 📂 Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-dist
+          path: dist/
+
+      - name: 🔑 Authenticate ServiceNow SDK to PROD
+        run: |
+          echo "${{ secrets.SN_PROD_PASS }}" | npx now-sdk auth \
+            --add "${{ secrets.SN_PROD_INSTANCE }}" \
+            --type basic \
+            --alias prod \
+            --username "${{ secrets.SN_PROD_USER }}" \
+            --password-stdin
+
+      - name: 🚀 Deploy App to PROD
+        run: npm run deploy -- --auth prod
+
+      - name: 🏷️ Tag Successful Deployment
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "release-$(date +'%Y%m%d-%H%M%S')" -m "Verified and Deployed via CI/CD Pipeline"
+          git push origin --tags || echo "Tag push skipped (check permissions)."
