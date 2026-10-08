@@ -1,4 +1,4 @@
-# Metadata as Code on ServiceNow: A Unified Fluent SDK and Playwright DevOps Framework
+# GitOps for ServiceNow: CI/CD with the Fluent SDK and Playwright
 
 **Author:** Srinivas Anil Kumar Varanasi  
 **Practice:** IBM Consulting — ServiceNow Platform Engineering  
@@ -11,7 +11,7 @@
 
 ServiceNow customisation has traditionally been a point-and-click, instance-bound activity. Changes are made directly in a browser, transported between environments via Update Sets, and verified manually. This model creates drift, makes peer review difficult, and has no native path to automated testing.
 
-This article presents a production-grade engineering framework that treats ServiceNow configuration as code. Using the **ServiceNow Fluent SDK** (now-sdk) to define platform artifacts in TypeScript, **Playwright** to run automated browser-based end-to-end tests, and **GitHub Actions** to orchestrate a multi-stage CI/CD pipeline, we demonstrate a workflow where every change is version-controlled, automatically deployed, and test-verified before reaching production.
+This article presents a production-grade GitOps framework for ServiceNow. Using the **ServiceNow Fluent SDK** (now-sdk) to define platform artifacts in TypeScript, **Playwright** to run automated browser-based end-to-end tests, and **GitHub Actions** to orchestrate a multi-stage CI/CD pipeline, we demonstrate a workflow where every change is version-controlled, automatically deployed, and test-verified before reaching production.
 
 The complete framework is open source at: **https://github.com/anilvaranasi/FluentAndPlayWright**
 

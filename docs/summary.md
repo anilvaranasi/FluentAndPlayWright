@@ -1,4 +1,4 @@
-# Metadata as Code on ServiceNow — Executive Summary
+# GitOps for ServiceNow: CI/CD with the Fluent SDK and Playwright — Executive Summary
 
 **Author:** Srinivas Anil Kumar Varanasi  
 **Practice:** IBM Consulting — ServiceNow Platform Engineering  
