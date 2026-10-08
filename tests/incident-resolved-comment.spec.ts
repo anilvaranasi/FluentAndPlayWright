@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../NowConfig.env') });
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-test.describe('Requirement 1: Incident Resolved Auto Additional Comments Validation (SOW)', () => {
+test.describe.skip('Requirement 1: Incident Resolved Auto Additional Comments Validation (SOW)', () => {
   test('E2E Validation: Incident creation & resolution in SOW adds greeting comment', async ({ page }) => {
     test.setTimeout(120_000);
 

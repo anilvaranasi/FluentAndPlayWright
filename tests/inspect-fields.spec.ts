@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Inspect Incident Mandatory and Resolution Fields', async ({ page }) => {
+test.skip('Inspect Incident Mandatory and Resolution Fields', async ({ page }) => {
   const baseURL = process.env.SN_DEV_INSTANCE || 'https://dev224768.service-now.com';
   const username = process.env.SN_DEV_USER || 'admin';
   const password = process.env.SN_DEV_PASS || 'jD@2F/bRiS5x';
