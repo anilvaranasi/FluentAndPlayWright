@@ -7,7 +7,7 @@ import {
     StringColumn,
     IntegerColumn,
     BooleanColumn,
-    ChoiceColumn
+    ChoiceColumn,
 } from '@servicenow/sdk/core'
 
 import { setPriorityOnInsert, stampReviewedOnClose } from '../server/businessRuleScripts'
@@ -27,6 +27,7 @@ export const x_146833_fluentp_0_task = Table({
         u_priority_override: IntegerColumn({
             label: 'Priority Override',
             mandatory: false,
+            maxLength: 40,
         }),
         u_custom_category: ChoiceColumn({
             label: 'Custom Category',
@@ -37,6 +38,7 @@ export const x_146833_fluentp_0_task = Table({
                 security: { label: 'Security', sequence: 40 },
             },
             mandatory: false,
+            maxLength: 40,
         }),
         u_channel_source: StringColumn({
             label: 'Channel Source',
@@ -45,7 +47,8 @@ export const x_146833_fluentp_0_task = Table({
         }),
         u_reviewed: BooleanColumn({
             label: 'Reviewed',
-            default: 'false',
+            default: false,
+            maxLength: 40,
         }),
         u_test_tag: StringColumn({
             label: 'Automated Test Tag',
@@ -53,6 +56,16 @@ export const x_146833_fluentp_0_task = Table({
             mandatory: false,
         }),
     },
+    actions: {
+        read: true,
+        update: true,
+        delete: false,
+        create: true,
+    },
+    allowClientScripts: true,
+    allowNewFields: true,
+    allowUiActions: true,
+    allowWebServiceAccess: true,
 })
 
 // ─── 2. BUSINESS RULE: Set Priority on Insert ────────────────────────────────
