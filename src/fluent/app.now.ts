@@ -161,3 +161,26 @@ BusinessRule({
         gs.info('[FluentPlay] Added resolution comment for Incident: ' + current.number);
     }`,
 })
+
+// ─── 7. BUSINESS RULE: Require Short Description before In Progress ─────────
+// Requirement: An incident cannot move to In Progress (2) while Short description is empty
+BusinessRule({
+    $id: Now.ID['br_incident_require_short_desc'],
+    name: 'x_146833_fluentp_0 - Require Short Description for In Progress',
+    table: 'incident',
+    active: true,
+    when: 'before',
+    action: ['insert', 'update'],
+    condition: script`current.state == 2`,
+    order: 50,
+    script: script`function executeRule(current, previous /*null when async*/) {
+        if (!current.state.changes()) {
+            return;
+        }
+        var shortDesc = String(current.getValue('short_description') || '').trim();
+        if (shortDesc === '') {
+            gs.addErrorMessage('Short description is required before moving the incident to In Progress.');
+            current.setAbortAction(true);
+        }
+    }`,
+})

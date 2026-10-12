@@ -93,6 +93,10 @@ declare global {
                         table: 'sys_module'
                         id: 'cc69c83e102f4f349d4516378a736efb'
                     }
+                    br_incident_require_short_desc: {
+                        table: 'sys_script'
+                        id: '16e54bb9cbed4b53803a8eb766548b7c'
+                    }
                     br_incident_resolved_comment: {
                         table: 'sys_script'
                         id: 'afb7f7d1e2d8435781f3ae5b65700b53'
