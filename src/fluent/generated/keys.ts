@@ -5,6 +5,90 @@ declare global {
         namespace Internal {
             interface Keys extends KeysRegistry {
                 explicit: {
+                    '034637a583bf4350b96f6ed0deaad398': {
+                        table: 'sys_wizard_answer'
+                        id: '034637a583bf4350b96f6ed0deaad398'
+                    }
+                    '101fbc3910e84f1eb48177813653f6d3': {
+                        table: 'sys_script_include'
+                        id: '101fbc3910e84f1eb48177813653f6d3'
+                    }
+                    '1cea27a9833f4350b96f6ed0deaad3f1': {
+                        table: 'sys_embedded_help_role'
+                        id: '1cea27a9833f4350b96f6ed0deaad3f1'
+                    }
+                    '1f24569de7c44367bfe13f641f5d7af8': {
+                        table: 'sys_script'
+                        id: '1f24569de7c44367bfe13f641f5d7af8'
+                    }
+                    '3a0ab13939bf4878b5554ccbe6fd8190': {
+                        table: 'sys_script'
+                        id: '3a0ab13939bf4878b5554ccbe6fd8190'
+                    }
+                    '3b03e703cbae43829bffd1d46161b2b6': {
+                        table: 'sys_script_include'
+                        id: '3b03e703cbae43829bffd1d46161b2b6'
+                    }
+                    '402cbcff07bd4a15a3fb790266cf7cf0': {
+                        table: 'sys_script_client'
+                        id: '402cbcff07bd4a15a3fb790266cf7cf0'
+                    }
+                    '51024487b3d24e37abe1695518cd9e54': {
+                        table: 'sys_script'
+                        id: '51024487b3d24e37abe1695518cd9e54'
+                    }
+                    '5373c22bd3314af589a8188a8d9be2ae': {
+                        table: 'sys_script_client'
+                        id: '5373c22bd3314af589a8188a8d9be2ae'
+                    }
+                    '547c97252ff540579e690bfaa86b7c1c': {
+                        table: 'sys_script'
+                        id: '547c97252ff540579e690bfaa86b7c1c'
+                    }
+                    '6118fee17acb42b4987e795463902ffb': {
+                        table: 'sys_script'
+                        id: '6118fee17acb42b4987e795463902ffb'
+                    }
+                    '651b7221104643c486229b0a9a2dab06': {
+                        table: 'sys_script_include'
+                        id: '651b7221104643c486229b0a9a2dab06'
+                    }
+                    '6aff8d6ec3624052817ef0bd38ff18ef': {
+                        table: 'sys_script'
+                        id: '6aff8d6ec3624052817ef0bd38ff18ef'
+                    }
+                    '80f52299f3344dcaa2d0155763f2cd1d': {
+                        table: 'sys_script'
+                        id: '80f52299f3344dcaa2d0155763f2cd1d'
+                    }
+                    '9468bec1841a4d40bafd998a5bc3b433': {
+                        table: 'sys_script'
+                        id: '9468bec1841a4d40bafd998a5bc3b433'
+                    }
+                    '98ea27a9833f4350b96f6ed0deaad3db': {
+                        table: 'sys_embedded_help_role'
+                        id: '98ea27a9833f4350b96f6ed0deaad3db'
+                    }
+                    a7316306fd72495b9dec10922b0603de: {
+                        table: 'sys_script'
+                        id: 'a7316306fd72495b9dec10922b0603de'
+                    }
+                    aacd3c51d3a44eddb3a5d2ddfe2dacc2: {
+                        table: 'sys_script_include'
+                        id: 'aacd3c51d3a44eddb3a5d2ddfe2dacc2'
+                    }
+                    b7e8737cfe174b8c93d025087124e217: {
+                        table: 'sys_script'
+                        id: 'b7e8737cfe174b8c93d025087124e217'
+                    }
+                    bc617aebe0d442f9b93f6d78234b6609: {
+                        table: 'sys_script_include'
+                        id: 'bc617aebe0d442f9b93f6d78234b6609'
+                    }
+                    bf7b97ff117346b5b10818525de1f79f: {
+                        table: 'sys_script'
+                        id: 'bf7b97ff117346b5b10818525de1f79f'
+                    }
                     bom_json: {
                         table: 'sys_module'
                         id: 'cc69c83e102f4f349d4516378a736efb'
@@ -21,9 +105,41 @@ declare global {
                         table: 'sys_script'
                         id: '4af7a4c94d184d56afbf90546cfab0c0'
                     }
+                    c762d88d39e844bb9fd438f364bd14d2: {
+                        table: 'sys_script'
+                        id: 'c762d88d39e844bb9fd438f364bd14d2'
+                    }
+                    c8a97e517e2a43c1a74933a77bdae799: {
+                        table: 'sys_script_client'
+                        id: 'c8a97e517e2a43c1a74933a77bdae799'
+                    }
+                    cd1e678efd404ccb96e63d9a4cff2ac9: {
+                        table: 'sys_script'
+                        id: 'cd1e678efd404ccb96e63d9a4cff2ac9'
+                    }
                     cs_task_onload_helper: {
                         table: 'sys_script_client'
                         id: 'dfca531c8d69432794715cb87e725d51'
+                    }
+                    d087943a1a16416a8963c56328379565: {
+                        table: 'sys_script'
+                        id: 'd087943a1a16416a8963c56328379565'
+                    }
+                    d0966284f12d408eb5fd5e0f894cfd61: {
+                        table: 'sys_script'
+                        id: 'd0966284f12d408eb5fd5e0f894cfd61'
+                    }
+                    e0dff51a616b41e3b2c2ef383b2b3c2f: {
+                        table: 'sys_script_client'
+                        id: 'e0dff51a616b41e3b2c2ef383b2b3c2f'
+                    }
+                    f3b50e0986704cf19a1b8e9f1942c10a: {
+                        table: 'sys_script_client'
+                        id: 'f3b50e0986704cf19a1b8e9f1942c10a'
+                    }
+                    fb4677a583bf4350b96f6ed0deaad385: {
+                        table: 'sys_package_dependency_m2m'
+                        id: 'fb4677a583bf4350b96f6ed0deaad385'
                     }
                     package_json: {
                         table: 'sys_module'
