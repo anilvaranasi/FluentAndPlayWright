@@ -19,3 +19,9 @@ NowConfig.env
 Thumbs.db
 .vscode/
 *.log
+
+# ServiceNow SDK local state
+.now/
+
+# Local Word exports of docs
+docs/*.docx
