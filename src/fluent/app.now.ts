@@ -171,16 +171,9 @@ BusinessRule({
     active: true,
     when: 'before',
     action: ['insert', 'update'],
-    condition: script`current.state == 2`,
+    filterCondition: 'stateCHANGESTO2^short_descriptionISEMPTY^EQ',
     order: 50,
-    script: script`(function executeRule(current, previous /*null when async*/) {
-        if (!current.state.changes()) {
-            return;
-        }
-        var shortDesc = String(current.getValue('short_description') || '').trim();
-        if (shortDesc === '') {
-            gs.addErrorMessage('Short description is required before moving the incident to In Progress.');
-            current.setAbortAction(true);
-        }
-    })(current, previous);`,
+    abortAction: true,
+    addMessage: true,
+    message: 'Short description is required before moving the incident to In Progress.',
 })
