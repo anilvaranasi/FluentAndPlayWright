@@ -173,7 +173,7 @@ BusinessRule({
     action: ['insert', 'update'],
     condition: script`current.state == 2`,
     order: 50,
-    script: script`function executeRule(current, previous /*null when async*/) {
+    script: script`(function executeRule(current, previous /*null when async*/) {
         if (!current.state.changes()) {
             return;
         }
@@ -182,5 +182,5 @@ BusinessRule({
             gs.addErrorMessage('Short description is required before moving the incident to In Progress.');
             current.setAbortAction(true);
         }
-    }`,
+    })(current, previous);`,
 })
