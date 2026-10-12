@@ -12,6 +12,9 @@ on:
     branches: [ prod ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   NODE_VERSION: '20'
 
