@@ -4,10 +4,14 @@ import {
     BusinessRule,
     ClientScript,
     ScriptInclude,
+    Form,
+    default_view,
     StringColumn,
     IntegerColumn,
     BooleanColumn,
     ChoiceColumn,
+    ReferenceColumn,
+    MultiLineTextColumn,
 } from '@servicenow/sdk/core'
 
 import { setPriorityOnInsert, stampReviewedOnClose } from '../server/businessRuleScripts'
@@ -176,4 +180,71 @@ BusinessRule({
     abortAction: true,
     addMessage: true,
     message: 'Short description is required before moving the incident to In Progress.',
+})
+
+// ─── 8. STORY "Build the Request Form": FACILITIES REQUEST TABLE ─────────────
+// Five fields: Requester Name, Location, Request Type, Description, Priority
+export const x_146833_fluentp_0_facilities_request = Table({
+    name: 'x_146833_fluentp_0_facilities_request',
+    label: 'Facilities Request',
+    display: 'location',
+    allowWebServiceAccess: true,
+    schema: {
+        requester: ReferenceColumn({
+            label: 'Requester Name',
+            referenceTable: 'sys_user',
+            default: 'javascript:gs.getUserID()',
+        }),
+        location: StringColumn({
+            label: 'Location',
+            maxLength: 100,
+        }),
+        // Choices follow the "Create Request Type Dropdown" story; the form needs the field to exist.
+        request_type: ChoiceColumn({
+            label: 'Request Type',
+            choices: {
+                repair: { label: 'Repair', sequence: 10 },
+                cleaning: { label: 'Cleaning', sequence: 20 },
+                safety_hazard: { label: 'Safety Hazard', sequence: 30 },
+                room_booking: { label: 'Room Booking', sequence: 40 },
+                move_request: { label: 'Move Request', sequence: 50 },
+            },
+        }),
+        description: MultiLineTextColumn({
+            label: 'Description',
+            maxLength: 4000,
+        }),
+        priority: ChoiceColumn({
+            label: 'Priority',
+            choices: {
+                low: { label: 'Low', sequence: 10 },
+                medium: { label: 'Medium', sequence: 20 },
+                high: { label: 'High', sequence: 30 },
+                critical: { label: 'Critical', sequence: 40 },
+            },
+        }),
+    },
+})
+
+// Form layout: one column, fields in the order required by the story
+Form({
+    table: 'x_146833_fluentp_0_facilities_request',
+    view: default_view,
+    sections: [
+        {
+            caption: 'Request',
+            content: [
+                {
+                    layout: 'one-column',
+                    elements: [
+                        { type: 'table_field', field: 'requester' },
+                        { type: 'table_field', field: 'location' },
+                        { type: 'table_field', field: 'request_type' },
+                        { type: 'table_field', field: 'description' },
+                        { type: 'table_field', field: 'priority' },
+                    ],
+                },
+            ],
+        },
+    ],
 })
