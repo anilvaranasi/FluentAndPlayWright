@@ -93,6 +93,10 @@ declare global {
                         table: 'sys_module'
                         id: 'cc69c83e102f4f349d4516378a736efb'
                     }
+                    br_facilities_request_description_min_length: {
+                        table: 'sys_script'
+                        id: 'f1c9ba2f37c445e781ab0ffc4201c0f8'
+                    }
                     br_incident_require_short_desc: {
                         table: 'sys_script'
                         id: '16e54bb9cbed4b53803a8eb766548b7c'
@@ -120,6 +124,10 @@ declare global {
                     cd1e678efd404ccb96e63d9a4cff2ac9: {
                         table: 'sys_script'
                         id: 'cd1e678efd404ccb96e63d9a4cff2ac9'
+                    }
+                    cs_facilities_request_description_min_length: {
+                        table: 'sys_script_client'
+                        id: 'a911d13a7b7c41e7855ea356a84de9b1'
                     }
                     cs_task_onload_helper: {
                         table: 'sys_script_client'

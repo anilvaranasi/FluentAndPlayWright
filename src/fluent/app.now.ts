@@ -198,10 +198,12 @@ export const x_146833_fluentp_0_facilities_request = Table({
         location: StringColumn({
             label: 'Location',
             maxLength: 100,
+            mandatory: true,
         }),
         // Choices follow the "Create Request Type Dropdown" story; the form needs the field to exist.
         request_type: ChoiceColumn({
             label: 'Request Type',
+            mandatory: true,
             choices: {
                 repair: { label: 'Repair', sequence: 10 },
                 cleaning: { label: 'Cleaning', sequence: 20 },
@@ -247,4 +249,43 @@ Form({
             ],
         },
     ],
+})
+
+// ─── 9. STORY "Add Required Field Validations" ───────────────────────────────
+// Location and Request Type are mandatory (dictionary level, see section 8).
+// Description needs at least 20 characters: enforced on the server (all roles, all channels)
+// and on the form with an inline error before the round trip.
+BusinessRule({
+    $id: Now.ID['br_facilities_request_description_min_length'],
+    name: 'x_146833_fluentp_0 - Facilities Request Description Minimum Length',
+    table: 'x_146833_fluentp_0_facilities_request',
+    active: true,
+    when: 'before',
+    action: ['insert', 'update'],
+    condition: script`current.description.toString().length < 20`,
+    order: 50,
+    abortAction: true,
+    addMessage: true,
+    message: 'Please provide at least 20 characters in the description.',
+})
+
+ClientScript({
+    $id: Now.ID['cs_facilities_request_description_min_length'],
+    name: 'x_146833_fluentp_0 - Facilities Request Description Minimum Length',
+    table: 'x_146833_fluentp_0_facilities_request',
+    active: true,
+    applies_extended: false,
+    global: false,
+    ui_type: 'all',
+    type: 'onSubmit',
+    isolate_script: false,
+    messages: '',
+    script: script`function onSubmit() {
+        var text = g_form.getValue('description') || '';
+        if (text.length < 20) {
+            g_form.showFieldMsg('description', 'Please provide at least 20 characters in the description.', 'error');
+            return false;
+        }
+        return true;
+    }`,
 })
