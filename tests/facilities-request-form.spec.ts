@@ -26,7 +26,9 @@ async function openNewForm(page: Page): Promise<void> {
   await page.waitForFunction(() => !!(window as unknown as { g_form?: unknown }).g_form, undefined, { timeout: 45_000 });
 }
 
-const fieldBox = (page: Page, field: string) => page.locator(`[id="element.${TABLE}.${field}"]`);
+// Most fields render a container with id element.<table>.<field>; multi-line text only exposes the control itself.
+const fieldBox = (page: Page, field: string) =>
+  page.locator(`[id="element.${TABLE}.${field}"], textarea[id="${TABLE}.${field}"]`).first();
 
 test.describe('Story: Build the Request Form', () => {
 
@@ -50,18 +52,27 @@ test.describe('Story: Build the Request Form', () => {
   });
 
   test('TC-RF-02 (AC2): all 5 fields are visible, labelled correctly and in the correct order', async ({ page }) => {
-    await openNewForm(page);
+    const { api, headers } = await session(page);
 
+    // Verify labels via sys_documentation (authoritative source for column labels)
+    const docResp = await api.get(
+      `/api/now/table/sys_documentation?sysparm_query=name=${TABLE}^language=en^elementIN${FIELDS.join(',')}&sysparm_fields=element,label`,
+      { headers },
+    );
+    expect(docResp.ok(), `sys_documentation lookup: ${docResp.status()}`).toBeTruthy();
+    const docs: { element: string; label: string }[] = (await docResp.json()).result;
+    const labelMap = Object.fromEntries(docs.map((d) => [d.element, d.label]));
+    for (let i = 0; i < FIELDS.length; i++) {
+      expect(labelMap[FIELDS[i]], `${FIELDS[i]} label should be "${LABELS[i]}"`).toBe(LABELS[i]);
+    }
+
+    // Verify all 5 fields are visible on the form
+    await openNewForm(page);
     for (const f of FIELDS) {
       await expect(fieldBox(page, f), `${f} should be visible`).toBeVisible();
     }
 
-    const labels = await page.evaluate(
-      (fields) => fields.map((f) => (window as unknown as { g_form: { getLabelOf(n: string): string } }).g_form.getLabelOf(f)),
-      FIELDS,
-    );
-    expect(labels).toEqual(LABELS);
-
+    // Verify top-to-bottom ordering matches the intended order
     const tops: number[] = [];
     for (const f of FIELDS) {
       const box = await fieldBox(page, f).boundingBox();
