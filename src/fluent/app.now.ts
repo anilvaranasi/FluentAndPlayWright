@@ -76,7 +76,7 @@ export const x_146833_fluentp_0_task = Table({
 // Copies u_priority_override into priority when populated on insert
 BusinessRule({
     $id: Now.ID['br_set_priority_on_insert'],
-    name: 'x_146833_fluentp_0 - Set Priority on Insert',
+    name: 'x_146833_fluentp_0 - Set Priority on Ins',
     table: 'x_146833_fluentp_0_task',
     active: true,
     when: 'before',
@@ -89,7 +89,7 @@ BusinessRule({
 // Automatically stamps u_reviewed = true when state transitions to Closed (7)
 BusinessRule({
     $id: Now.ID['br_stamp_reviewed_on_close'],
-    name: 'x_146833_fluentp_0 - Stamp Reviewed on Close',
+    name: 'x_146833_fluentp_0 - Stamp Reviewed on C',
     table: 'x_146833_fluentp_0_task',
     active: true,
     when: 'before',
@@ -105,11 +105,11 @@ ClientScript({
     name: 'x_146833_fluentp_0 - Task OnLoad Banner',
     table: 'x_146833_fluentp_0_task',
     active: true,
-    applies_extended: false,
+    appliesExtended: false,
     global: false,
-    ui_type: 'all',
+    uiType: 'all',
     type: 'onLoad',
-    isolate_script: false,
+    isolateScript: false,
     messages: '',
     script: script`function onLoad() {
         var isNew = g_form.isNewRecord();
@@ -134,17 +134,19 @@ ScriptInclude({
     clientCallable: true,
     description: 'Server utility for Fluent Playwright framework operations and validations.',
     script: Now.include('../server/FluentPlayUtils.server.js'),
+    mobileCallable: false,
+    sandboxCallable: false,
 })
 
 // ─── 6. BUSINESS RULE: Incident Resolved Auto-Comment ────────────────────────
 // Requirement: When incident state transitions to Resolved (6), add greeting comment
 BusinessRule({
     $id: Now.ID['br_incident_resolved_comment'],
-    name: 'x_146833_fluentp_0 - Incident Resolved Auto Comment',
+    name: 'x_146833_fluentp_0 - Incident Resolved A',
     table: 'incident',
     active: true,
     when: 'before',
-    action: ['insert', 'update'],
+    action: ['update', 'insert'],
     condition: script`current.state == 6 || current.incident_state == 6`,
     order: 100,
     script: script`function executeRule(current, previous /*null when async*/) {
@@ -170,11 +172,11 @@ BusinessRule({
 // Requirement: An incident cannot move to In Progress (2) while Short description is empty
 BusinessRule({
     $id: Now.ID['br_incident_require_short_desc'],
-    name: 'x_146833_fluentp_0 - Require Short Description for In Progress',
+    name: 'x_146833_fluentp_0 - Require Short Descr',
     table: 'incident',
     active: true,
     when: 'before',
-    action: ['insert', 'update'],
+    action: ['update', 'insert'],
     filterCondition: 'stateCHANGESTO2^short_descriptionISEMPTY^EQ',
     order: 50,
     abortAction: true,
@@ -194,6 +196,7 @@ export const x_146833_fluentp_0_facilities_request = Table({
             label: 'Requester Name',
             referenceTable: 'sys_user',
             default: 'javascript:gs.getUserID()',
+            maxLength: 32,
         }),
         location: StringColumn({
             label: 'Location',
@@ -211,6 +214,7 @@ export const x_146833_fluentp_0_facilities_request = Table({
                 room_booking: { label: 'Room Booking', sequence: 40 },
                 move_request: { label: 'Move Request', sequence: 50 },
             },
+            maxLength: 40,
         }),
         description: MultiLineTextColumn({
             label: 'Description',
@@ -224,8 +228,25 @@ export const x_146833_fluentp_0_facilities_request = Table({
                 high: { label: 'High', sequence: 30 },
                 critical: { label: 'Critical', sequence: 40 },
             },
+            maxLength: 40,
         }),
     },
+    actions: {
+        read: false,
+        update: false,
+        delete: false,
+        create: false,
+    },
+    allowClientScripts: false,
+    allowNewFields: false,
+    allowUiActions: false,
+    index: [
+        {
+            name: 'index',
+            unique: false,
+            element: 'requester',
+        },
+    ],
 })
 
 // Form layout: one column, fields in the order required by the story
@@ -258,11 +279,11 @@ Form({
 // Dictionary "mandatory" only applies in the UI, so the same rule is enforced server side for API and import submissions.
 BusinessRule({
     $id: Now.ID['br_facilities_request_required_fields'],
-    name: 'x_146833_fluentp_0 - Facilities Request Required Fields',
+    name: 'x_146833_fluentp_0 - Facilities Request',
     table: 'x_146833_fluentp_0_facilities_request',
     active: true,
     when: 'before',
-    action: ['insert', 'update'],
+    action: ['update', 'insert'],
     filterCondition: 'locationISEMPTY^ORrequest_typeISEMPTY^EQ',
     order: 40,
     abortAction: true,
@@ -272,11 +293,11 @@ BusinessRule({
 
 BusinessRule({
     $id: Now.ID['br_facilities_request_description_min_length'],
-    name: 'x_146833_fluentp_0 - Facilities Request Description Minimum Length',
+    name: 'x_146833_fluentp_0 - Facilities Request',
     table: 'x_146833_fluentp_0_facilities_request',
     active: true,
     when: 'before',
-    action: ['insert', 'update'],
+    action: ['update', 'insert'],
     condition: script`current.description.toString().length < 20`,
     order: 50,
     abortAction: true,
@@ -286,14 +307,14 @@ BusinessRule({
 
 ClientScript({
     $id: Now.ID['cs_facilities_request_description_min_length'],
-    name: 'x_146833_fluentp_0 - Facilities Request Description Minimum Length',
+    name: 'x_146833_fluentp_0 - Facilities Request',
     table: 'x_146833_fluentp_0_facilities_request',
     active: true,
-    applies_extended: false,
+    appliesExtended: false,
     global: false,
-    ui_type: 'all',
+    uiType: 'all',
     type: 'onSubmit',
-    isolate_script: false,
+    isolateScript: false,
     messages: '',
     script: script`function onSubmit() {
         var text = g_form.getValue('description') || '';
