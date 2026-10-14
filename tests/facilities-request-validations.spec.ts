@@ -107,7 +107,10 @@ test.describe('Story: Add Required Field Validations', () => {
     await setField(page, 'request_type', 'repair');
     await setField(page, 'description', SHORT_DESC);
     await submit(page);
-    await expect(page.getByText(MIN_MSG).first(), 'inline error message').toBeVisible();
+    // innerText only holds rendered text; textContent would also match the script source on the page
+    await expect
+      .poll(() => page.evaluate(() => document.body.innerText), { message: 'error message about the minimum length' })
+      .toContain(MIN_MSG);
 
     const api = await s.api.post(`/api/now/table/${TABLE}`, {
       headers: s.headers,
@@ -162,7 +165,7 @@ test.describe('Story: Add Required Field Validations', () => {
 
     // The length rule is a server-side business rule with no role or user condition
     const br = await s.api.get(
-      `/api/now/table/sys_script?sysparm_query=collection=${TABLE}^nameLIKEDescription&sysparm_fields=name,active,when,abort_action,filter_condition,role_conditions`,
+      `/api/now/table/sys_script?sysparm_query=collection=${TABLE}^abort_action=true&sysparm_fields=name,active,when,abort_action,filter_condition,role_conditions`,
       { headers: s.headers },
     );
     const rules: Record<string, string>[] = (await br.json()).result;

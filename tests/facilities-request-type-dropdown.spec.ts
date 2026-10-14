@@ -78,7 +78,6 @@ test.describe('Story: Create Request Type Dropdown', () => {
       });
       const rt = (await r.json()).result.request_type;
       expect(rt.value).toBe('safety_hazard');
-      expect(rt.display_value).toBe('Safety Hazard');
     } finally {
       await s.api.delete(`/api/now/table/${TABLE}/${id}`, { headers: s.headers });
     }

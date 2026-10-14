@@ -255,6 +255,21 @@ Form({
 // Location and Request Type are mandatory (dictionary level, see section 8).
 // Description needs at least 20 characters: enforced on the server (all roles, all channels)
 // and on the form with an inline error before the round trip.
+// Dictionary "mandatory" only applies in the UI, so the same rule is enforced server side for API and import submissions.
+BusinessRule({
+    $id: Now.ID['br_facilities_request_required_fields'],
+    name: 'x_146833_fluentp_0 - Facilities Request Required Fields',
+    table: 'x_146833_fluentp_0_facilities_request',
+    active: true,
+    when: 'before',
+    action: ['insert', 'update'],
+    filterCondition: 'locationISEMPTY^ORrequest_typeISEMPTY^EQ',
+    order: 40,
+    abortAction: true,
+    addMessage: true,
+    message: 'Location and Request Type are required.',
+})
+
 BusinessRule({
     $id: Now.ID['br_facilities_request_description_min_length'],
     name: 'x_146833_fluentp_0 - Facilities Request Description Minimum Length',
@@ -284,6 +299,7 @@ ClientScript({
         var text = g_form.getValue('description') || '';
         if (text.length < 20) {
             g_form.showFieldMsg('description', 'Please provide at least 20 characters in the description.', 'error');
+            g_form.addErrorMessage('Please provide at least 20 characters in the description.');
             return false;
         }
         return true;

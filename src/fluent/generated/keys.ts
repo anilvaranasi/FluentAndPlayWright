@@ -97,6 +97,10 @@ declare global {
                         table: 'sys_script'
                         id: 'f1c9ba2f37c445e781ab0ffc4201c0f8'
                     }
+                    br_facilities_request_required_fields: {
+                        table: 'sys_script'
+                        id: '6e102a5efe4b4f8ab14052c7ece69be7'
+                    }
                     br_incident_require_short_desc: {
                         table: 'sys_script'
                         id: '16e54bb9cbed4b53803a8eb766548b7c'
