@@ -157,6 +157,14 @@ declare global {
                         table: 'sys_package_dependency_m2m'
                         id: 'fb4677a583bf4350b96f6ed0deaad385'
                     }
+                    flow_facilities_request_submission: {
+                        table: 'sys_hub_flow'
+                        id: 'e9c0458951d74026bd056c119c8da055'
+                    }
+                    log_facilities_request_received: {
+                        table: 'sys_hub_action_instance_v2'
+                        id: '96362dc683e24789b2849f8ded1362bc'
+                    }
                     package_json: {
                         table: 'sys_module'
                         id: '90241ca84f9946deab9af8689abad97f'
@@ -172,6 +180,10 @@ declare global {
                     src_server_FluentPlayUtils_server_js: {
                         table: 'sys_module'
                         id: 'e752ac61670f4f569267bfc662322ffd'
+                    }
+                    trigger_facilities_request_created: {
+                        table: 'sys_hub_trigger_instance_v2'
+                        id: '7ddafba8e7d74102a0225a67b52d4c33'
                     }
                 }
                 composite: [
