@@ -85,18 +85,33 @@ test.describe('Story: Create Request Type Dropdown', () => {
 
   test('TC-RT-03 (AC4): a new choice appears in the dropdown without any code change', async ({ page }) => {
     const s = await session(page);
-    const added = await s.api.post('/api/now/table/sys_choice', {
+    // Choices on a scoped table can only be edited while that application is the current one (an admin does the same in the app picker)
+    const scopeRes = await s.api.get('/api/now/table/sys_scope?sysparm_query=scope=x_146833_fluentp_0&sysparm_fields=sys_id', {
       headers: s.headers,
-      data: { name: TABLE, element: 'request_type', label: 'Pest Control', value: 'pest_control', sequence: 60, inactive: 'false' },
     });
-    expect(added.ok(), `add choice: ${added.status()} ${await added.text()}`).toBeTruthy();
-    const choiceId: string = (await added.json()).result.sys_id;
+    const scopeId: string = (await scopeRes.json()).result[0].sys_id;
+    const currentRes = await s.api.get('/api/now/ui/concoursepicker/current', { headers: s.headers });
+    const previousApp: string = (await currentRes.json()).result.currentApplication.sysId;
+    const switchApp = (appId: string) =>
+      s.api.put('/api/now/ui/concoursepicker/application', { headers: s.headers, data: { app_id: appId } });
+    expect((await switchApp(scopeId)).ok(), 'switch to the Fluent app scope').toBeTruthy();
+
     try {
-      await openNewForm(page);
-      const labels = (await dropdownOptions(page)).map((o) => o.label);
-      expect(labels).toContain('Pest Control');
+      const added = await s.api.post('/api/now/table/sys_choice', {
+        headers: s.headers,
+        data: { name: TABLE, element: 'request_type', label: 'Pest Control', value: 'pest_control', sequence: 60, inactive: 'false' },
+      });
+      expect(added.ok(), `add choice: ${added.status()} ${await added.text()}`).toBeTruthy();
+      const choiceId: string = (await added.json()).result.sys_id;
+      try {
+        await openNewForm(page);
+        const labels = (await dropdownOptions(page)).map((o) => o.label);
+        expect(labels).toContain('Pest Control');
+      } finally {
+        await s.api.delete(`/api/now/table/sys_choice/${choiceId}`, { headers: s.headers });
+      }
     } finally {
-      await s.api.delete(`/api/now/table/sys_choice/${choiceId}`, { headers: s.headers });
+      await switchApp(previousApp);
     }
     await openNewForm(page);
     expect((await dropdownOptions(page)).map((o) => o.label), 'removed again').not.toContain('Pest Control');
