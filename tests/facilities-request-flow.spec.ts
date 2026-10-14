@@ -29,7 +29,9 @@ async function createRequest(s: Session, location: string): Promise<string> {
   return (await r.json()).result.sys_id;
 }
 
-type FlowRun = { sys_id: string; state: string; source_record: string; name: string };
+type Ref = string | { value: string };
+type FlowRun = { sys_id: string; state: string; source_record: Ref; name: string };
+const refValue = (r: Ref): string => (typeof r === 'string' ? r : r.value);
 
 async function flowRuns(s: Session, recordId: string): Promise<FlowRun[]> {
   const r = await s.api.get(
@@ -81,7 +83,7 @@ test.describe('Story: Trigger Flow on Submission', () => {
     try {
       const runs = await waitForRuns(s, id, 1);
       expect(runs).toHaveLength(1);
-      expect(runs[0].source_record).toBe(id);
+      expect(refValue(runs[0].source_record)).toBe(id);
       await expect
         .poll(async () => (await flowRuns(s, id))[0].state, { message: 'flow run state', timeout: 90_000 })
         .toBe('COMPLETE');
@@ -99,7 +101,7 @@ test.describe('Story: Trigger Flow on Submission', () => {
       expect(new Set(runIds).size, 'every run is a distinct flow context').toBe(ids.length);
       runsPerRecord.forEach((runs, i) => {
         expect(runs, `exactly one run for record ${i}`).toHaveLength(1);
-        expect(runs[0].source_record, 'no cross-contamination of records').toBe(ids[i]);
+        expect(refValue(runs[0].source_record), 'no cross-contamination of records').toBe(ids[i]);
       });
     } finally {
       for (const id of ids) await del(s, id);
