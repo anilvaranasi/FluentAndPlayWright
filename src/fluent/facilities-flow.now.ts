@@ -26,7 +26,7 @@ export const facilitiesRequestSubmissionFlow = Flow(
             run_when_user_setting: 'any',
         }
     ),
-    () => {
+    (_params) => {
         wfa.action(
             action.core.log,
             {
