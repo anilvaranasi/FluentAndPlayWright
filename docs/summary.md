@@ -57,7 +57,7 @@ Local (mydev branch)
                     ┌────────────────────────────────┐
                     │  1. Playwright gate vs DEV      │
                     │  2. Build for PROD              │
-                    │  3. ⏸ Manual approval           │  reviewer clicks Approve
+                    │  3. Explicit OK to promote      │  given before the push to prod
                     │  4. Deploy → ServiceNow PROD    │
                     │  5. Tag release                 │
                     └────────────────────────────────┘
@@ -65,19 +65,33 @@ Local (mydev branch)
 
 **Total time DEV → deployed + tested:** approximately 4 minutes.
 
+**Approval:** no required reviewers are configured on the `production` GitHub environment today. The approval step is a person giving an explicit OK before the commit is pushed to `prod`. Adding Required reviewers makes it a hard gate.
+
 ---
 
 ## What Is Deployed to ServiceNow
 
 The reference application (`x_146833_fluentp_0`) includes:
 
-- **1 Custom Table** (`x_146833_fluentp_0_task`) extending `task`, with 5 application-specific columns
-- **2 Business Rules** on the custom table (priority on insert, auto-stamp reviewed on close)
-- **1 Business Rule** on the out-of-box `incident` table (auto-comment on resolution)
-- **1 Client Script** (form-load information banner)
+- **2 Custom Tables**: `x_146833_fluentp_0_task` (extends `task`, 5 application-specific columns) and `x_146833_fluentp_0_facilities_request` (5 fields: Requester Name, Location, Request Type, Description, Priority)
+- **1 Form layout** for the Facilities Request table, with the fields in the required order
+- **2 Business Rules** on the task table (priority on insert, auto-stamp reviewed on close)
+- **2 Business Rules** on the Facilities Request table (Location and Request Type required; Description of at least 20 characters)
+- **2 Business Rules** on the out-of-box `incident` table (auto-comment on resolution; short description required before In Progress)
+- **2 Client Scripts** (task form-load banner; Facilities Request onSubmit length check)
 - **1 Script Include** (`FluentPlayUtils` — server-side utility, client-callable)
 
-All defined in a single TypeScript file: `src/fluent/app.now.ts`.
+All defined in one TypeScript file: `src/fluent/app.now.ts`.
+
+---
+
+## Story-Driven Delivery
+
+Stories are read from a monday.com board (read-only). For each story: write the Playwright tests first, add the Fluent code, push to `nowdev` and let the pipeline deploy and test on DEV, then promote to `prod` after an explicit OK and run the same tests against PROD.
+
+Delivered and verified on DEV and PROD: Build the Request Form, Add Required Field Validations, Create Request Type Dropdown, and the incident short-description rule.
+
+Limits: the request form is tested on the platform form, not a Service Portal page, and the mobile check is a viewport overflow check only.
 
 ---
 
@@ -114,8 +128,10 @@ All defined in a single TypeScript file: `src/fluent/app.now.ts`.
 | `now-sdk build` | ✅ Passing |
 | Deploy → ServiceNow DEV | ✅ Passing |
 | Playwright connectivity smoke test | ✅ Passing |
-| Application E2E tests | ⏭️ Pending (skipped until scoped app confirmed on instance) |
-| Deploy → ServiceNow PROD | 🔒 Gated (awaiting DEV validation + manual approval) |
+| Story tests (request form, validations, dropdown, incident short description) | ✅ Passing on DEV and PROD |
+| Incident resolved-comment and field-inspection specs | ⏭️ Skipped on the `nowdev` branch |
+| Deploy → ServiceNow PROD | ✅ Passing, promoted after an explicit OK |
+| Flow started on request submission | ⚠️ Passing on DEV (5/5). On PROD the flow deploys inactive because the SDK's flow-activation endpoint is missing there; it needs a one-time manual activation |
 
 ---
 

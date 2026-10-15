@@ -61,7 +61,7 @@ Developer Local Machine
     ┌─────────────────────────────────────────┐
     │  Stage 1: Playwright gate vs DEV         │  ← environment: development
     │  Stage 2: Build for PROD                 │  ← environment: production
-    │  Stage 3: Manual approval gate           │  ← reviewer approval required
+    │  Stage 3: Promotion approval             │  ← explicit OK before the push (see 6.2)
     │  Stage 4: Deploy → ServiceNow PROD       │
     │  Stage 5: Tag release                    │
     └─────────────────────────────────────────┘
@@ -208,6 +208,27 @@ Every artifact above is:
 - **Reviewable** — diffs in GitHub PRs show exactly what changed and why
 - **Auditable** — the git log is the deployment history
 - **Repeatable** — `npm run deploy` produces the same result every time against any target instance
+
+### 4.6 Story-driven delivery from a monday.com board
+
+User stories live on a monday.com board, which is read through its API with a read-only token. For each story the order of work is:
+
+1. **Read the story** and its Given/When/Then acceptance criteria (AC1, AC2, ...).
+2. **Write the Playwright tests first**, one test per acceptance criterion (for example `TC-RF-02 (AC2)`).
+3. **Add the Fluent code** until the tests describe what is built.
+4. **Push `mydev` to `nowdev`.** The pipeline builds, deploys to DEV and runs the whole suite.
+5. **Get an explicit OK**, then push the same commit to `prod`. Verify PROD by running the same tests against it, then fast-forward `master`.
+
+Stories delivered so far in the Facilities Request app (scope `x_146833_fluentp_0`):
+
+| Story | Fluent artifacts | Spec |
+|-------|------------------|------|
+| Build the Request Form | Table `x_146833_fluentp_0_facilities_request` with five fields and a one-column form in the required order | `facilities-request-form.spec.ts` |
+| Add Required Field Validations | Mandatory Location and Request Type; a business rule that blocks empty values; a business rule and an onSubmit client script for the 20-character Description minimum | `facilities-request-validations.spec.ts` |
+| Create Request Type Dropdown | Five Request Type choices: Repair, Cleaning, Safety Hazard, Room Booking, Move Request | `facilities-request-type-dropdown.spec.ts` |
+| Require Short Description for In Progress | Declarative business rule on `incident` | `incident-short-desc-required.spec.ts` |
+
+Two limits are worth stating plainly. The request form is tested on the platform form (`/<table>.do`), not on a Service Portal page. The mobile check is a 390px viewport overflow check, not a device test.
 
 ---
 
@@ -365,7 +386,9 @@ jobs:
 
 ### 6.2 prod Pipeline — Production Promotion
 
-Triggered by push or PR merge to `prod`. Adds a re-validation gate and a mandatory human approval step before any code reaches production.
+Triggered by push or PR merge to `prod`. Adds a re-validation gate before any code reaches production.
+
+The workflow deploys through the `production` environment, so GitHub can enforce a reviewer there. **No required reviewers are configured today.** In practice the approval is a human giving an explicit OK before the commit is pushed to `prod`. To make it a hard gate, add reviewers under Settings → Environments → production → Required reviewers.
 
 ```yaml
 jobs:
@@ -380,7 +403,7 @@ jobs:
 
   deploy-prod:
     needs: build-prod
-    environment: production      # requires manual reviewer approval in GitHub
+    environment: production      # add Required reviewers in GitHub Settings → Environments for a hard gate
     steps:
       - run: npm run deploy -- --auth prod
       - name: Tag release
@@ -418,7 +441,7 @@ GitHub Environments (`development` and `production`) provide secret isolation an
 | Environment | Secrets | Protection |
 |-------------|---------|------------|
 | `development` | `SN_DEV_INSTANCE`, `SN_DEV_USER`, `SN_DEV_PASS` | None — fast feedback |
-| `production` | `SN_PROD_INSTANCE`, `SN_PROD_USER`, `SN_PROD_PASS` | Required reviewer approval |
+| `production` | `SN_PROD_INSTANCE`, `SN_PROD_USER`, `SN_PROD_PASS` | None configured today; Required reviewers can be added as a hard gate |
 
 This means PROD credentials are never available to the `nowdev` pipeline — they cannot be accidentally used or exposed.
 
@@ -484,6 +507,44 @@ The `src/` directory (containing `app.now.ts`) is **excluded from `tsc`**. The F
 
 **Solution:** Retrieve the `sys_id` from the instance (`sys_scope` table, query on `scope = x_146833_fluentp_0`) and populate `now.config.json` accordingly.
 
+### Challenge 6: Business rule scripts that do not run
+
+**Problem:** A business rule written as a `function executeRule(...)` script was deployed but never invoked, and `setAbortAction(true)` inside a script did not abort the save.
+
+**Solution:** Use the declarative settings instead: `filterCondition`, `abortAction: true`, `addMessage: true` and `message`. This is what the short-description and required-field rules use.
+
+### Challenge 7: REST basic authentication is rejected on DEV
+
+**Problem:** Calls to `/api/now/table` with basic auth returned 401 on the DEV instance.
+
+**Solution:** The tests use the logged-in browser session. They open a list page, read `g_ck` from the page, and call `page.request` with the `X-UserToken` header.
+
+### Challenge 8: Mandatory fields are only enforced in the UI
+
+**Problem:** A dictionary `mandatory` flag blocks the form but not an API insert, so a record without Location was accepted through REST.
+
+**Solution:** Add a server-side business rule (`locationISEMPTY^ORrequest_typeISEMPTY`) that aborts the insert, so every channel behaves the same.
+
+### Challenge 9: Choices on a scoped table cannot be added from Global scope
+
+**Problem:** Adding a `sys_choice` record through the API returned 403 because the current application was Global.
+
+**Solution:** The test switches the current application to the Fluent app scope through the application picker API, adds the choice, deletes it, and switches back.
+
+### Challenge 10: Labels on multi-line text fields
+
+**Problem:** `g_form.getLabelOf()` returns the field name for a multi-line text field, so a label check failed.
+
+**Solution:** Read the labels from `sys_documentation`, which is the authoritative source for column labels.
+
+### Challenge 11: A Fluent flow deploys but is not active on the target instance
+
+**Problem:** The "Trigger Flow on Submission" flow (Record Created on the Facilities Request table) was built and deployed to DEV as published and active, yet no flow run started for new records until it was corrected by hand on DEV. After the corrected definition was promoted, PROD received the flow as `status = draft`, `active = false` ("Inactive", read-only in Workflow Studio). The flow tests failed on PROD (TC-FLOW-01 saw `active = false`, TC-FLOW-02 saw no run), while all five passed on DEV.
+
+**Cause:** `now-sdk install` activates flows after install by calling `POST api/now/wfa_fluent/activate_flows`. On the PROD lab instance that endpoint does not exist ("Requested URI does not represent any resource"). The SDK treats this as a silent skip and logs it only at debug level, so the pipeline step reported success.
+
+**Status:** Not resolved in this project. The flow definition in the repo carries the settings that made it fire on DEV (`run_flow_in: 'any'`, `condition: '^EQ'`, explicit `run_when_user_*`). The flow must be activated once on PROD by hand in Workflow Studio (Edit flow, then Activate), or PROD must run a ServiceNow version that ships the `wfa_fluent` endpoint. Flow activation should be treated as a deployment prerequisite and checked by a test, which TC-FLOW-01 already does.
+
 ---
 
 ## 9. Repository Structure
@@ -498,14 +559,19 @@ FluentAndPlayWright/
 │       └── fluent-playwright-pipeline.yml  # PR quality gate (typecheck + build)
 ├── src/
 │   ├── fluent/
-│   │   └── app.now.ts                   # All ServiceNow artifacts as TypeScript
+│   │   ├── app.now.ts                   # ServiceNow artifacts as TypeScript (tables, rules, form, scripts)
+│   │   └── generated/                   # Keys and records written by now-sdk build / transform
 │   └── server/
 │       ├── businessRuleScripts.js       # Business Rule script bodies
 │       └── FluentPlayUtils.server.js    # Script Include logic
 ├── tests/
 │   ├── fluent-app.spec.ts               # Connectivity smoke test
-│   ├── incident-resolved-comment.spec.ts  # Incident BR validation (skip until deployed)
-│   └── inspect-fields.spec.ts          # Field inspection utility (skip until deployed)
+│   ├── facilities-request-form.spec.ts  # Story: Build the Request Form
+│   ├── facilities-request-validations.spec.ts  # Story: Add Required Field Validations
+│   ├── facilities-request-type-dropdown.spec.ts  # Story: Create Request Type Dropdown
+│   ├── incident-short-desc-required.spec.ts  # Incident rule: short description before In Progress
+│   ├── incident-resolved-comment.spec.ts  # Incident BR validation (skipped on the nowdev branch)
+│   └── inspect-fields.spec.ts          # Field inspection utility (skipped on the nowdev branch)
 ├── utils/
 │   ├── base-page.ts                     # ServiceNowPage base POM
 │   ├── fluent-task-page.ts              # FluentTaskPage POM
@@ -564,6 +630,7 @@ With the pipeline foundation in place, the following capabilities are natural ex
 - **Extend Cucumber BDD coverage** — the Gherkin feature files and Cucumber step definitions are scaffolded. Business analysts can write feature files; engineers implement the step bindings.
 - **Add Allure or custom HTML reporting** — Playwright's built-in HTML reporter is already configured. Allure integration provides richer trend analysis across pipeline runs.
 - **Implement branch protection rules** on `nowdev` and `prod` — require the `nowdev-pipeline` status check to pass before any PR can be merged to `prod`.
+- **Add Required reviewers to the `production` environment** so the promotion approval is enforced by GitHub, not by convention.
 
 ---
 
